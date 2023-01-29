@@ -1,14 +1,14 @@
-# OralB BLE
+# Sonicare BLE
 
 <p align="center">
-  <a href="https://github.com/Bluetooth-Devices/oralb-ble/actions?query=workflow%3ACI">
-    <img src="https://img.shields.io/github/workflow/status/Bluetooth-Devices/oralb-ble/CI/main?label=CI&logo=github&style=flat-square" alt="CI Status" >
+  <a href="https://github.com/Bluetooth-Devices/sonicare-ble/actions?query=workflow%3ACI">
+    <img src="https://img.shields.io/github/workflow/status/Bluetooth-Devices/sonicare-ble/CI/main?label=CI&logo=github&style=flat-square" alt="CI Status" >
   </a>
-  <a href="https://oralb-ble.readthedocs.io">
-    <img src="https://img.shields.io/readthedocs/oralb-ble.svg?logo=read-the-docs&logoColor=fff&style=flat-square" alt="Documentation Status">
+  <a href="https://sonicare-ble.readthedocs.io">
+    <img src="https://img.shields.io/readthedocs/sonicare-ble.svg?logo=read-the-docs&logoColor=fff&style=flat-square" alt="Documentation Status">
   </a>
-  <a href="https://codecov.io/gh/Bluetooth-Devices/oralb-ble">
-    <img src="https://img.shields.io/codecov/c/github/Bluetooth-Devices/oralb-ble.svg?logo=codecov&logoColor=fff&style=flat-square" alt="Test coverage percentage">
+  <a href="https://codecov.io/gh/Bluetooth-Devices/sonicare-ble">
+    <img src="https://img.shields.io/codecov/c/github/Bluetooth-Devices/sonicare-ble.svg?logo=codecov&logoColor=fff&style=flat-square" alt="Test coverage percentage">
   </a>
 </p>
 <p align="center">
@@ -23,20 +23,20 @@
   </a>
 </p>
 <p align="center">
-  <a href="https://pypi.org/project/oralb-ble/">
-    <img src="https://img.shields.io/pypi/v/oralb-ble.svg?logo=python&logoColor=fff&style=flat-square" alt="PyPI Version">
+  <a href="https://pypi.org/project/sonicare-ble/">
+    <img src="https://img.shields.io/pypi/v/sonicare-ble.svg?logo=python&logoColor=fff&style=flat-square" alt="PyPI Version">
   </a>
-  <img src="https://img.shields.io/pypi/pyversions/oralb-ble.svg?style=flat-square&logo=python&amp;logoColor=fff" alt="Supported Python versions">
-  <img src="https://img.shields.io/pypi/l/oralb-ble.svg?style=flat-square" alt="License">
+  <img src="https://img.shields.io/pypi/pyversions/sonicare-ble.svg?style=flat-square&logo=python&amp;logoColor=fff" alt="Supported Python versions">
+  <img src="https://img.shields.io/pypi/l/sonicare-ble.svg?style=flat-square" alt="License">
 </p>
 
-Bluetooth library for Oral B devices
+Bluetooth library for Sonicare devices
 
 ## Installation
 
 Install this via pip (or your favourite package manager):
 
-`pip install oralb-ble`
+`pip install sonicare-ble`
 
 ## Contributors ✨
 

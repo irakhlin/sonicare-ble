@@ -1,4 +1,4 @@
-# Welcome to OralB BLE documentation!
+# Welcome to Sonicare BLE documentation!
 
 ```{toctree}
 :caption: Installation & Usage
