@@ -22,6 +22,11 @@ from .const import (
     CHARACTERISTIC_STATE,
     NOT_BRUSHING_UPDATE_INTERVAL_SECONDS,
     TIMEOUT_RECENTLY_BRUSHING,
+    CHARACTERISTIC_BRUSH_USAGE,
+    CHARACTERISTIC_BRUSH_LIFETIME,
+    CHARACTERISTIC_SERIAL_NUMBER,
+    CHARACTERISTIC_STRENGTH,
+    CHARACTERISTIC_MODE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,14 +36,15 @@ class SonicareSensor(StrEnum):
 
     BRUSHING_TIME = "brushing_time"
     CURRENT_TIME = "current_time"
-    SECTOR = "sector"
-    NUMBER_OF_SECTORS = "number_of_sectors"
-    SECTOR_TIMER = "sector_timer"
     TOOTHBRUSH_STATE = "toothbrush_state"
     MODE = "mode"
     SIGNAL_STRENGTH = "signal_strength"
     BATTERY_PERCENT = "battery_percent"
-
+    BRUSH_TYPE = "brush_type"
+    BRUSH_STRENGTH = "brush_strength"
+    BRUSH_HEAD_LIFETIME = "brush_head_lifetime"
+    BRUSH_HEAD_USAGE = "brush_head_usage"
+    BRUSH_HEAD_PERCENTAGE = "brush_head_percentage"
 
 class SonicareBinarySensor(StrEnum):
     BRUSHING = "brushing"
@@ -47,16 +53,49 @@ class SonicareBinarySensor(StrEnum):
 class Models(Enum):
 
     HX6340 = auto()
+    HX992X = auto()
 
 
 @dataclass
 class ModelDescription:
 
     device_type: str
+    modes: dict[int, str]
 
+
+KIDS_MODES = {
+    0: "none"
+}
+
+EXPERT_CLEAN_MODES = {
+    120: "clean",
+    200: "gun health",
+    180: "deep clean+",
+}
+
+DIAMOND_CLEAN_MODES = EXPERT_CLEAN_MODES | {160: "white+"}
+
+PRESTIGE_MODES = DIAMOND_CLEAN_MODES | {210: "sensitive"}
 
 DEVICE_TYPES = {
-    Models.HX6340: ModelDescription("HX6340"),
+    Models.HX6340: ModelDescription(
+        device_type="Kids series",
+        modes=KIDS_MODES
+    ),
+    Models.HX992X: ModelDescription(
+        device_type="9300 DiamondClean series",
+        modes=DIAMOND_CLEAN_MODES
+    ),
+    Models.HX9990: ModelDescription(
+        device_type="9900 Prestige series",
+        modes=PRESTIGE_MODES
+    )
+}
+
+STRENGTH = {
+    0: "low",
+    1: "medium",
+    2: "high"
 }
 
 STATES = {
@@ -74,9 +113,9 @@ SONICARE_MANUFACTURER = 477
 
 
 BYTES_TO_MODEL = {
-    # b"\x062k": Models.HX6340,
+    b"\x062k": Models.HX6340,
+    b"\x2a24": Models.HX992X
 }
-
 
 class SonicareBluetoothDeviceData(BluetoothData):
     """Data for Sonicare BLE sensors."""
@@ -107,7 +146,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             return
 
         # model = BYTES_TO_MODEL.get(device_bytes, Models.HX6340)
-        model = Models.HX6340
+        model = Models.HX992X
         model_info = DEVICE_TYPES[model]
         self.set_device_type(model_info.device_type)
         name = f"{model_info.device_type} {short_address(address)}"
@@ -157,6 +196,21 @@ class SonicareBluetoothDeviceData(BluetoothData):
                     _LOGGER.debug("Exception reading characteristic")
 
         try:
+            brush_usage_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_USAGE)
+            brush_usage_payload = await client.read_gatt_char(brush_usage_char)
+
+            brush_lifetime_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_LIFETIME)
+            brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char)
+
+
+            mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
+            mode_payload = await client.read_gatt_char(mode_char)
+
+            strength_char = client.services.get_characteristic(CHARACTERISTIC_STRENGTH)
+            strength_payload = await client.read_gatt_char(strength_char)
+
+
+
             battery_char = client.services.get_characteristic(CHARACTERISTIC_BATTERY)
             battery_payload = await client.read_gatt_char(battery_char)
 
