@@ -54,6 +54,7 @@ class Models(Enum):
 
     HX6340 = auto()
     HX992X = auto()
+    HX9990 = auto()
 
 
 @dataclass
@@ -114,7 +115,8 @@ SONICARE_MANUFACTURER = 477
 
 BYTES_TO_MODEL = {
     b"\x062k": Models.HX6340,
-    b"\x2a24": Models.HX992X
+    b"\x2a24": Models.HX992X,
+    b"\x9999": Models.HX9990,
 }
 
 class SonicareBluetoothDeviceData(BluetoothData):
@@ -200,7 +202,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             brush_usage_payload = await client.read_gatt_char(brush_usage_char)
 
             brush_lifetime_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_LIFETIME)
-            brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char)
+            brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char, use_cached=True)
 
 
             mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
@@ -261,4 +263,35 @@ class SonicareBluetoothDeviceData(BluetoothData):
             "Toothbrush current time",
         )
 
+        self.update_sensor(
+            str(SonicareSensor.BRUSH_HEAD_LIFETIME),
+            None,
+            brush_lifetime_payload,
+            None,
+            "Toothbrush head total lifetime"
+        )
+
+        self.update_sensor(
+            str(SonicareSensor.BRUSH_HEAD_USAGE),
+            None,
+            brush_usage_payload,
+            None,
+            "Toothbrush head usage to,e"
+        )
+
+        self.update_sensor(
+            str(SonicareSensor.MODE),
+            None,
+            mode_payload,
+            None,
+            "Toothbrush current mode"
+        )
+
+        self.update_sensor(
+            str(SonicareSensor.BRUSH_STRENGTH),
+            None,
+            strength_payload,
+            None,
+            "Toothbrush current mode"
+        )
         return self._finish_update()
