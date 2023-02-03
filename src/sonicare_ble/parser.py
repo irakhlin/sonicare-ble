@@ -80,15 +80,15 @@ PRESTIGE_MODES = DIAMOND_CLEAN_MODES | {210: "sensitive"}
 
 DEVICE_TYPES = {
     Models.HX6340: ModelDescription(
-        device_type="Kids series",
+        device_type="HX6340",
         modes=KIDS_MODES
     ),
     Models.HX992X: ModelDescription(
-        device_type="9300 DiamondClean series",
+        device_type="HX992X",
         modes=DIAMOND_CLEAN_MODES
     ),
     Models.HX9990: ModelDescription(
-        device_type="9900 Prestige series",
+        device_type="HX9990",
         modes=PRESTIGE_MODES
     )
 }
