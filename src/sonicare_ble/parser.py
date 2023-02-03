@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import time
+
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -214,7 +215,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             brush_usage_payload = await client.read_gatt_char(brush_usage_char)
 
             brush_lifetime_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_LIFETIME)
-            brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char, use_cached=True)
+            brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char)
 
             mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
             mode_payload = await client.read_gatt_char(mode_char)
@@ -238,13 +239,15 @@ class SonicareBluetoothDeviceData(BluetoothData):
                 CHARACTERISTIC_CURRENT_TIME
             )
             current_time_payload = await client.read_gatt_char(current_time_char)
+            current_time_epoch = int.from_bytes(current_time_payload, "little")
+            current_time_stamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time_epoch))
         finally:
             _LOGGER.error("Unable to get data in async_poll")
             await client.disconnect()
         self.update_sensor(
             str(SonicareSensor.BRUSHING_TIME),
             None,
-            brushing_time_payload,
+            int.from_bytes(brushing_time_payload, "little"),
             None,
             "Brushing time",
         )
@@ -267,7 +270,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.CURRENT_TIME),
             None,
-            current_time_payload,
+            current_time_stamp,
             None,
             "Toothbrush current time",
         )
@@ -275,7 +278,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_HEAD_LIFETIME),
             None,
-            brush_lifetime_payload,
+            int.from_bytes(brush_lifetime_payload, "little"),
             None,
             "Toothbrush head total lifetime"
         )
@@ -283,7 +286,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_HEAD_USAGE),
             None,
-            brush_usage_payload,
+            int.from_byte(brush_usage_payload, "little"),
             None,
             "Toothbrush head usage"
         )
@@ -299,8 +302,8 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_STRENGTH),
             None,
-            strength_payload,
+            int.from_byte(strength_payload, "little"),
             None,
-            "Toothbrush current mode"
+            "Toothbrush current strength"
         )
         return self._finish_update()
