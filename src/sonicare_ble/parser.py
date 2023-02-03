@@ -286,7 +286,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_HEAD_USAGE),
             None,
-            int.from_byte(brush_usage_payload, "little"),
+            int.from_bytes(brush_usage_payload, "little"),
             None,
             "Toothbrush head usage"
         )
@@ -302,7 +302,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_STRENGTH),
             None,
-            int.from_byte(strength_payload, "little"),
+            int.from_bytes(strength_payload, "little"),
             None,
             "Toothbrush current strength"
         )
