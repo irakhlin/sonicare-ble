@@ -27,6 +27,7 @@ from .const import (
     CHARACTERISTIC_SERIAL_NUMBER,
     CHARACTERISTIC_STRENGTH,
     CHARACTERISTIC_MODE,
+    SONICARE_ADVERTISMENT_UUID
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -132,13 +133,25 @@ class SonicareBluetoothDeviceData(BluetoothData):
         """Update from BLE advertisement data."""
         _LOGGER.debug("Parsing Sonicare BLE advertisement data: %s", service_info)
         manufacturer_data = service_info.manufacturer_data
+        service_uuids = service_info.service_uuids
         address = service_info.address
         _LOGGER.debug(
             "Parsing Sonicare BLE advertisement manufacturer data: %s",
             manufacturer_data,
         )
-        if SONICARE_MANUFACTURER not in manufacturer_data:
+        correct_device = False
+        for service_uuid in service_uuids:
+            _LOGGER.debug(
+                "Parsing Sonicare BLE uuid: %s",
+                service_uuid,
+            )
+            if SONICARE_ADVERTISMENT_UUID in service_uuid:
+                correct_device = True
+
+        if not correct_device:
             return None
+#        if SONICARE_MANUFACTURER not in manufacturer_data:
+#            return None
         data = manufacturer_data[SONICARE_MANUFACTURER]
         self.set_device_manufacturer("Philips Sonicare")
         _LOGGER.debug("Parsing Sonicare sensor: %s", data)
