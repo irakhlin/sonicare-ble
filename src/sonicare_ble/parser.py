@@ -28,7 +28,8 @@ from .const import (
     CHARACTERISTIC_SERIAL_NUMBER,
     CHARACTERISTIC_STRENGTH,
     CHARACTERISTIC_MODE,
-    SONICARE_ADVERTISMENT_UUID
+    SONICARE_ADVERTISMENT_UUID,
+    CHARACTERISTIC_BRUSH_TYPE
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class SonicareSensor(StrEnum):
     BRUSH_HEAD_LIFETIME = "brush_head_lifetime"
     BRUSH_HEAD_USAGE = "brush_head_usage"
     BRUSH_HEAD_PERCENTAGE = "brush_head_percentage"
+    BRUSH_SERIAL_NUMBER = "brush_serial_number"
 
 class SonicareBinarySensor(StrEnum):
     BRUSHING = "brushing"
@@ -136,30 +138,24 @@ class SonicareBluetoothDeviceData(BluetoothData):
         manufacturer_data = service_info.manufacturer_data
         service_uuids = service_info.service_uuids
         address = service_info.address
-        _LOGGER.debug(
-            "Parsing Sonicare BLE advertisement manufacturer data: %s",
-            manufacturer_data,
-        )
-        correct_device = False
-        for service_uuid in service_uuids:
-            _LOGGER.debug(
-                "Parsing Sonicare BLE uuid: %s",
-                service_uuid,
-            )
-            if SONICARE_ADVERTISMENT_UUID in service_uuid:
-                correct_device = True
 
-        if not correct_device:
-            return None
-#        if SONICARE_MANUFACTURER not in manufacturer_data:
-#            return None
-        #data = manufacturer_data[SONICARE_MANUFACTURER]
+        if(
+            SONICARE_ADVERTISMENT_UUID not in service_uuids
+        ):
+            _LOGGER.debug("Not a Philips Sonicare BLE advertisement: %s", service_info)
+            return
+        # correct_device = False
+        # for service_uuid in service_uuids:
+        #     _LOGGER.debug(
+        #         "Parsing Sonicare BLE uuid: %s",
+        #         service_uuid,
+        #     )
+        #     if SONICARE_ADVERTISMENT_UUID in service_uuid:
+        #         correct_device = True
+        #
+        # if not correct_device:
+        #     return None
         self.set_device_manufacturer("Philips Sonicare")
-        #_LOGGER.debug("Parsing Sonicare sensor: %s", data)
-        #msg_length = len(data)
-        #_LOGGER.debug("Message length: %s", msg_length)
-        #if msg_length not in (9, 999):
-        #    return
         # model = BYTES_TO_MODEL.get(device_bytes, Models.HX6340)
         model = Models.HX992X
         model_info = DEVICE_TYPES[model]
@@ -194,21 +190,21 @@ class SonicareBluetoothDeviceData(BluetoothData):
         client = await establish_connection(
             BleakClientWithServiceCache, ble_device, ble_device.address
         )
-        for service in client.services:
-            _LOGGER.debug("Service uuid=%s handle=%s", service.uuid, service.handle)
-            for characteristic in service.characteristics:
-                try:
-                    value_char = client.services.get_characteristic(characteristic.uuid)
-                    value_payload = await client.read_gatt_char(value_char)
-                    _LOGGER.error(
-                        "Characteristic uuid=%s handle=%s ValueChar=%s ValuePayload=%s",
-                        characteristic.uuid,
-                        characteristic.handle,
-                        value_char,
-                        value_payload,
-                    )
-                except Exception:
-                    _LOGGER.debug("Exception reading characteristic")
+        # for service in client.services:
+        #     _LOGGER.debug("Service uuid=%s handle=%s", service.uuid, service.handle)
+        #     for characteristic in service.characteristics:
+        #         try:
+        #             value_char = client.services.get_characteristic(characteristic.uuid)
+        #             value_payload = await client.read_gatt_char(value_char)
+        #             _LOGGER.error(
+        #                 "Characteristic uuid=%s handle=%s ValueChar=%s ValuePayload=%s",
+        #                 characteristic.uuid,
+        #                 characteristic.handle,
+        #                 value_char,
+        #                 value_payload,
+        #             )
+        #         except Exception:
+        #             _LOGGER.debug("Exception reading characteristic")
 
         try:
             brush_usage_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_USAGE)
@@ -234,8 +230,11 @@ class SonicareBluetoothDeviceData(BluetoothData):
             state_char = client.services.get_characteristic(CHARACTERISTIC_STATE)
             state_payload = await client.read_gatt_char(state_char)
             tb_state = STATES.get(state_payload[0], f"unknown state {state_payload[0]}")
-            if state_payload[0] == 2:
+            _LOGGER.error("brushing state is changing to %s", tb_state)
+
+            if tb_state is "run" or state_payload[0] == 2:
                 self._brushing = True
+                self._last_brush = time.monotonic()
             else:
                 self._brushing = False
 
@@ -245,6 +244,14 @@ class SonicareBluetoothDeviceData(BluetoothData):
             current_time_payload = await client.read_gatt_char(current_time_char)
             current_time_epoch = int.from_bytes(current_time_payload, "little")
             current_time_stamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time_epoch))
+
+            brush_serial_number_char = client.services.get_characteristic(CHARACTERISTIC_SERIAL_NUMBER)
+            serial_number_payload = await client.read_gatt_char(brush_serial_number_char)
+            serial_number = int.from_bytes(serial_number_payload, "little")
+
+            brush_type_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_TYPE)
+            brush_type_payload = await client.read_gatt_char(brush_type_char)
+            brush_type = int.from_bytes(brush_type_payload, "little")
         finally:
             await client.disconnect()
         self.update_sensor(
@@ -308,5 +315,21 @@ class SonicareBluetoothDeviceData(BluetoothData):
             int.from_bytes(strength_payload, "little"),
             None,
             "Toothbrush current strength"
+        )
+
+        self.update_sensor(
+            str(SonicareSensor.BRUSH_TYPE),
+            None,
+            brush_type,
+            None,
+            "Toothbrush head type"
+        )
+
+        self.update_sensor(
+            str(SonicareSensor.BRUSH_SERIAL_NUMBER),
+            None,
+            serial_number,
+            None,
+            "Toothbrush serial number"
         )
         return self._finish_update()
