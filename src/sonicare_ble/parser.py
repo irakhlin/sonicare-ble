@@ -234,6 +234,10 @@ class SonicareBluetoothDeviceData(BluetoothData):
             state_char = client.services.get_characteristic(CHARACTERISTIC_STATE)
             state_payload = await client.read_gatt_char(state_char)
             tb_state = STATES.get(state_payload[0], f"unknown state {state_payload[0]}")
+            if state_payload[0] == 2:
+                self._brushing = True
+            else:
+                self._brushing = False
 
             current_time_char = client.services.get_characteristic(
                 CHARACTERISTIC_CURRENT_TIME
@@ -242,7 +246,6 @@ class SonicareBluetoothDeviceData(BluetoothData):
             current_time_epoch = int.from_bytes(current_time_payload, "little")
             current_time_stamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time_epoch))
         finally:
-            _LOGGER.error("Unable to get data in async_poll")
             await client.disconnect()
         self.update_sensor(
             str(SonicareSensor.BRUSHING_TIME),
@@ -294,7 +297,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.MODE),
             None,
-            mode_payload,
+            int.from_bytes(mode_payload, "little"),
             None,
             "Toothbrush current mode"
         )
