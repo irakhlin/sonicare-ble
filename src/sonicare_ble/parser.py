@@ -152,14 +152,13 @@ class SonicareBluetoothDeviceData(BluetoothData):
             return None
 #        if SONICARE_MANUFACTURER not in manufacturer_data:
 #            return None
-        data = manufacturer_data[SONICARE_MANUFACTURER]
+        #data = manufacturer_data[SONICARE_MANUFACTURER]
         self.set_device_manufacturer("Philips Sonicare")
-        _LOGGER.debug("Parsing Sonicare sensor: %s", data)
-        msg_length = len(data)
-        _LOGGER.debug("Message length: %s", msg_length)
-        if msg_length not in (9, 999):
-            return
-
+        #_LOGGER.debug("Parsing Sonicare sensor: %s", data)
+        #msg_length = len(data)
+        #_LOGGER.debug("Message length: %s", msg_length)
+        #if msg_length not in (9, 999):
+        #    return
         # model = BYTES_TO_MODEL.get(device_bytes, Models.HX6340)
         model = Models.HX992X
         model_info = DEVICE_TYPES[model]
@@ -217,14 +216,11 @@ class SonicareBluetoothDeviceData(BluetoothData):
             brush_lifetime_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_LIFETIME)
             brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char, use_cached=True)
 
-
             mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
             mode_payload = await client.read_gatt_char(mode_char)
 
             strength_char = client.services.get_characteristic(CHARACTERISTIC_STRENGTH)
             strength_payload = await client.read_gatt_char(strength_char)
-
-
 
             battery_char = client.services.get_characteristic(CHARACTERISTIC_BATTERY)
             battery_payload = await client.read_gatt_char(battery_char)
@@ -289,7 +285,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             None,
             brush_usage_payload,
             None,
-            "Toothbrush head usage to,e"
+            "Toothbrush head usage"
         )
 
         self.update_sensor(
