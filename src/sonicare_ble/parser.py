@@ -209,17 +209,18 @@ class SonicareBluetoothDeviceData(BluetoothData):
         try:
             brush_usage_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_USAGE)
             brush_usage_payload = await client.read_gatt_char(brush_usage_char)
-            usage = int.from_bytes(brush_usage_payload, "little"),
+            usage = int.from_bytes(brush_usage_payload, "little")
 
             brush_lifetime_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_LIFETIME)
             brush_lifetime_payload = await client.read_gatt_char(brush_lifetime_char)
-            lifetime = int.from_bytes(brush_lifetime_payload, "little"),
+
+            lifetime = int.from_bytes(brush_lifetime_payload, "little")
 
             brush_life_percentage_left = round(((lifetime - usage) / lifetime) * 100)
 
             mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
             mode_payload = await client.read_gatt_char(mode_char)
-            mode_int = self.int.from_bytes(mode_payload, "little")
+            mode_int = int.from_bytes(mode_payload, "little")
             if self._model:
                 info = DEVICE_TYPES[self._model]
                 mode = info.modes.get(mode_int, f"unknown mode {mode_int}")
