@@ -143,17 +143,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         ):
             _LOGGER.debug("Not a Philips Sonicare BLE advertisement: %s", service_info)
             return
-        # correct_device = False
-        # for service_uuid in service_uuids:
-        #     _LOGGER.debug(
-        #         "Parsing Sonicare BLE uuid: %s",
-        #         service_uuid,
-        #     )
-        #     if SONICARE_ADVERTISMENT_UUID in service_uuid:
-        #         correct_device = True
-        #
-        # if not correct_device:
-        #     return None
+
         self.set_device_manufacturer("Philips Sonicare")
         # model = BYTES_TO_MODEL.get(device_bytes, Models.HX6340)
         model = Models.HX992X
@@ -190,22 +180,6 @@ class SonicareBluetoothDeviceData(BluetoothData):
         client = await establish_connection(
             BleakClientWithServiceCache, ble_device, ble_device.address
         )
-        # for service in client.services:
-        #     _LOGGER.debug("Service uuid=%s handle=%s", service.uuid, service.handle)
-        #     for characteristic in service.characteristics:
-        #         try:
-        #             value_char = client.services.get_characteristic(characteristic.uuid)
-        #             value_payload = await client.read_gatt_char(value_char)
-        #             _LOGGER.error(
-        #                 "Characteristic uuid=%s handle=%s ValueChar=%s ValuePayload=%s",
-        #                 characteristic.uuid,
-        #                 characteristic.handle,
-        #                 value_char,
-        #                 value_payload,
-        #             )
-        #         except Exception:
-        #             _LOGGER.debug("Exception reading characteristic")
-
         try:
             brush_usage_char = client.services.get_characteristic(CHARACTERISTIC_BRUSH_USAGE)
             brush_usage_payload = await client.read_gatt_char(brush_usage_char)
@@ -216,7 +190,10 @@ class SonicareBluetoothDeviceData(BluetoothData):
 
             lifetime = int.from_bytes(brush_lifetime_payload, "little")
 
-            brush_life_percentage_left = round(((lifetime - usage) / lifetime) * 100)
+            if lifetime != 0 and usage !=0:
+                brush_life_percentage_left = round(((lifetime - usage) / lifetime) * 100)
+            else:
+                brush_life_percentage_left = 0
 
             mode_char = client.services.get_characteristic(CHARACTERISTIC_MODE)
             mode_payload = await client.read_gatt_char(mode_char)
@@ -230,7 +207,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             strength_char = client.services.get_characteristic(CHARACTERISTIC_STRENGTH)
             strength_payload = await client.read_gatt_char(strength_char)
             strength_result = STRENGTH.get(int.from_bytes(strength_payload, "little"),
-                                           f"unknown pressure {strength_payload}")
+                                           f"unknown speed {strength_payload}")
 
             battery_char = client.services.get_characteristic(CHARACTERISTIC_BATTERY)
             battery_payload = await client.read_gatt_char(battery_char)
@@ -243,7 +220,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             state_char = client.services.get_characteristic(CHARACTERISTIC_STATE)
             state_payload = await client.read_gatt_char(state_char)
             tb_state = STATES.get(state_payload[0], f"unknown state {state_payload[0]}")
-            _LOGGER.error("brushing state is changing to %s", tb_state)
+            _LOGGER.debug("brushing state is changing to %s", tb_state)
 
             if tb_state == "run" or state_payload[0] == 2:
                 self._brushing = True
@@ -303,7 +280,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             None,
             lifetime,
             None,
-            "Toothbrush head total lifetime"
+            "Brush head lifetime"
         )
 
         self.update_sensor(
@@ -311,7 +288,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
             None,
             usage,
             None,
-            "Toothbrush head usage"
+            "Brush head usage"
         )
 
         self.update_sensor(
@@ -325,7 +302,7 @@ class SonicareBluetoothDeviceData(BluetoothData):
         self.update_sensor(
             str(SonicareSensor.BRUSH_STRENGTH),
             None,
-            STRENGTH.get(strength_result-1, f"unknown strength"),
+            strength_result,
             None,
             "Toothbrush current strength"
         )
@@ -351,5 +328,6 @@ class SonicareBluetoothDeviceData(BluetoothData):
             Units.PERCENTAGE,
             brush_life_percentage_left,
             None,
+            "Brush head remaining"
         )
         return self._finish_update()
